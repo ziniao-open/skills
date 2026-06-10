@@ -1,7 +1,7 @@
 ---
 name: ziniao-openapi-explorer
 version: 1.1.0
-description: "紫鸟 API 探索：当现有快捷命令无法满足需求时，通过通用 api 命令和已知路径清单探索紫鸟全部 72 个 API 接口。"
+description: "紫鸟 API 探索：当现有快捷命令无法满足需求时，通过通用 api 命令和已知路径清单探索紫鸟全部 73 个 API 接口。"
 metadata:
   requires:
     bins: ["ziniao-cli"]
@@ -51,15 +51,17 @@ ziniao-cli role --help
 | 状态 | `/superbrowser/rest/v1/erp/staff/status` | `staff enable/disable/remove` |
 | 调岗 | `/superbrowser/rest/v1/erp/staff/department` | `staff transfer` |
 
-#### 账号（22 个）— 仍有 3 个需用 `api`
+#### 账号（23 个）— 仍有 4 个需用 `api`
 
 | 分类 | 路径前缀 | 快捷命令 |
 |------|---------|---------|
 | CRUD | `/superbrowser/rest/v1/erp/store/list\|create\|update/base\|delete` | `account list/create/update/delete` |
-| 缓存 | `/superbrowser/rest/v1/erp/store/deletecookie` | `api`（仅此接口）|
+| 缓存 | `/superbrowser/rest/v1/erp/store/deletecookie` | `api` |
 | 授权 | `/superbrowser/rest/v1/erp/store/auth/add\|delete\|clean`、`/superbrowser/rest/v1/erp/user/stores`、`/superbrowser/rest/v1/erp/store/user/list` | `account auth-*` |
-| 用户账号 | `/superbrowser/rest/v1/erp/store/list/by/user`、`/superbrowser/rest/v1/erp/user/stores` | `api` |
-| 标签 | `/superbrowser/rest/v1/erp/tag/list`、`/superbrowser/rest/v1/store-tag/add\|delete\|rename\|bind\|unbind\|replace\|clear\|remove` | `account tag-*` |
+| 授权查询 | `/superbrowser/rest/v1/erp/store/auth/query` | `api` |
+| 用户账号 | `/superbrowser/rest/v1/erp/store/list/by/user` | `api` |
+| 附加信息 | `/superbrowser/rest/v1/erp/store/addtion` | `api` |
+| 标签 | `/superbrowser/rest/v1/erp/tag/list`、`/superbrowser/rest/v1/store-tag/add\|delete\|rename\|bind\|unbind\|replace\|clear\|remove\|list` | `account tag-*` |
 
 #### 设备（11 个）— 仍有 2 个需用 `api`
 
