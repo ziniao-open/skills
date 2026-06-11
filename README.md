@@ -1,8 +1,3 @@
----
-markdown-sharing:
-  uri: 1b49392b-906b-496e-8309-6d8c2283b15f
----
-
 # ziniao-skills
 
 紫鸟浏览器 AI Agent Skill 包，覆盖 ERP 管理（员工/角色/设备/标签/部门）和店铺自动化操作，适配 ziniao-cli 与 ZClaw 本地接口。
