@@ -50,15 +50,15 @@ ziniao-cli account delete --id "101,102,103" --yes
 
 | 命令 | 说明 |
 |------|------|
-| `account auth-add` | 授权员工访问店铺（`--staff-id` 支持批量） |
-| `account auth-remove` | 撤销员工访问权限（`--staff-id` 支持批量） |
+| `account auth-add` | 授权员工访问店铺（`--store-id` 和 `--staff-id` 均支持逗号分隔批量） |
+| `account auth-remove` | 撤销员工访问权限（`--store-id` 和 `--staff-id` 均支持逗号分隔批量） |
 | `account auth-clean` | 清空店铺所有员工授权（高风险） |
 | `account auth-list` | 查询某员工被授权的店铺列表 |
 | `account auth-users` | 查询某店铺已授权的员工列表 |
 
 ```bash
-# 批量授权（把店铺 111 同时授权给 3 个员工）
-ziniao-cli account auth-add --store-id 111 --staff-id "201,202,203"
+# 批量授权（把 3 个店铺同时授权给 3 个员工）
+ziniao-cli account auth-add --store-id "111,222,333" --staff-id "201,202,203"
 
 # 撤销单人
 ziniao-cli account auth-remove --store-id 111 --staff-id 201
