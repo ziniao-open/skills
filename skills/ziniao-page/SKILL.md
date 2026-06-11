@@ -57,7 +57,7 @@ ziniao-cli automation run --steps '[
 |------|------|---------|
 | `page visit` | 导航到 URL | [`references/ziniao-page-visit.md`](references/ziniao-page-visit.md) |
 | `page screenshot` | 截图 | [`references/ziniao-page-screenshot.md`](references/ziniao-page-screenshot.md) |
-| `page content` | 获取页面内容 | `--store-id xxx --format text\|html\|structured` |
+| `page content` | 获取页面内容 | `--store-id xxx --content-format text\|html\|structured` |
 | `page query` | 查询 DOM 元素 | `--store-id xxx --selector "css"` |
 | `page click` | 点击元素 | `--store-id xxx --selector "css" --wait-nav` |
 | `page input` | 输入文本 | `--store-id xxx --selector "css" --text "val" --clear --submit` |

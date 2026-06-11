@@ -95,7 +95,7 @@ ziniao-cli page visit --store-id <storeId> --url "https://sellercentral.amazon.c
 
 ```bash
 # 提取页面文本，判断是否出现错误提示（403、验证码、封号）
-ziniao-cli page content --store-id <storeId> --format text
+ziniao-cli page content --store-id <storeId> --content-format text
 
 # 查询特定异常元素是否存在
 ziniao-cli page query --store-id <storeId> --selector ".captcha-container, .error-page, #auth-warning"
