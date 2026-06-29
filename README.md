@@ -5,7 +5,7 @@
 ## Skill 安装
 
 ```bash
-npx skills add ziniao-open/skills -y -g
+npx skills add ziniao-open/skills -y
 ```
 
 ## ziniao-cli 安装
@@ -55,7 +55,7 @@ ziniao-cli config init --new
 ⏳ 等待应用创建及审核... (按 Ctrl+C 取消)
 ✓ 审核已通过
 ✓ 企业 ID: 15393*****3459
-✓ 配置已保存
+✓ 配置已保存 (profile: zhangsan)
 ```
 
 初始化完成后，`isBoss` 字段决定账号权限范围：
@@ -67,13 +67,31 @@ ziniao-cli config init --new
 
 可通过 `ziniao-cli config show` 查看当前账号类型。
 
-### 3. 验证连通性
+### 3. 多账号管理
+
+支持多个账号配置（profile），通过 `config use` 切换：
+
+```bash
+# 列出所有 profile
+ziniao-cli config list
+
+# 切换到指定 profile
+ziniao-cli config use <name>
+
+# 重命名 profile
+ziniao-cli config rename <old> <new>
+
+# 删除 profile（需确认，--yes 跳过）
+ziniao-cli config remove --profile <name>
+```
+
+### 4. 验证连通性
 
 ```bash
 ziniao-cli doctor
 ```
 
-### 4. 开始使用
+### 5. 开始使用
 
 ```bash
 # 查看员工列表
@@ -87,6 +105,17 @@ ziniao-cli role list --format table
 ```
 
 ## 命令概览
+
+### 配置管理
+
+| 命令 | 说明 |
+|------|------|
+| `config init` | 初始化配置 |
+| `config show` | 显示当前配置 |
+| `config list` | 列出所有 profile |
+| `config use <name>` | 切换当前 profile |
+| `config rename <old> <new>` | 重命名 profile |
+| `config remove` | 删除 profile（需确认） |
 
 ### 部门管理
 
