@@ -22,6 +22,8 @@ metadata:
 | `ziniao-cli config init --new` | **AI Agent（推荐）** | 直接进入新建应用流程，输出浏览器链接后轮询等待 |
 | `ziniao-cli config init` | 人类用户交互 | 菜单选择：[1] 新建应用 [2] 手动输入 Key |
 | `ziniao-cli config init --api-key-stdin` | CI/CD 管道 | 从 stdin 读取已有 API Key |
+| `ziniao-cli config init --api-key-stdin --member` | 成员账号 CI | 跳过企业信息获取，仅用于控制浏览器 |
+| `ziniao-cli config init --profile <name>` | 多账号 | 指定 profile 名称（不传则自动命名） |
 
 ### AI Agent 初始化流程
 
@@ -77,14 +79,38 @@ Agent 应该：
 ### 检查配置
 
 ```bash
-ziniao-cli config show   # 查看当前配置
+ziniao-cli config show   # 查看当前配置（含 profile 名称）
+ziniao-cli config list   # 列出所有 profile
 ziniao-cli doctor         # 全面自检（配置 + apiKey + 网络 + ZClaw Bridge）
 ```
 
-### 删除配置
+### 多账号切换
+
+支持多个账号配置（profile），通过 `config use` 切换：
 
 ```bash
-ziniao-cli config remove  # 删除配置文件和所有 Keychain 凭证
+# 列出所有 profile
+ziniao-cli config list
+# * zhangsan
+#   staging
+
+# 切换到指定 profile
+ziniao-cli config use staging
+
+# 重命名 profile
+ziniao-cli config rename staging production
+```
+
+初始化时通过 `--profile` 指定名称，浏览器创建流程会自动用账号用户名命名。
+
+### 删除配置
+
+删除操作会弹出确认提示，`--yes` 可跳过：
+
+```bash
+ziniao-cli config remove              # 删除当前 profile（需确认）
+ziniao-cli config remove --profile staging  # 删除指定 profile（需确认）
+ziniao-cli config remove --yes        # 跳过确认直接删除
 ```
 
 ## 认证
