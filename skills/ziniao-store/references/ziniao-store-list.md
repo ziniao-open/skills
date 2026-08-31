@@ -1,6 +1,12 @@
 # store list
 
-> **前置条件：** 先阅读 [`../ziniao-shared/SKILL.md`](../../ziniao-shared/SKILL.md)。紫鸟浏览器必须已启动。
+> **前置条件：** 先阅读 [`../ziniao-shared/SKILL.md`](../../ziniao-shared/SKILL.md)，再检查店铺操作所需状态：
+>
+> ```bash
+> ziniao-cli doctor
+> ```
+>
+> `doctor` 明细确认通过后直接执行 `store list`，不得无条件启动或登录。检查未通过时，严格按照 `ziniao-shared` 的「ZClaw 客户端与 Bridge 就绪」流程处理；只有客户端未登录或 `store list` 明确返回会话缺失/过期时，才允许登录一次，随后重新检查并只重试一次。API Key、终端或账号认证失败时立即停止。
 
 列出所有店铺。只读操作。
 

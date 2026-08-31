@@ -4,9 +4,13 @@
 
 ## Skill 安装
 
+以后 Skill 内置在 `ziniao-cli` 里安装，不再单独走 `npx skills add`：
+
 ```bash
-npx skills add ziniao-open/skills -y
+ziniao-cli skills install
 ```
+
+先安装 CLI 后再执行上面的命令。备选（不推荐）：`npx skills add ziniao-open/skills -y -g`
 
 ## ziniao-cli 安装
 
@@ -224,7 +228,6 @@ ziniao-cli api /superbrowser/rest/v1/erp/store/deletecookie --data '{"storeId":"
 | `ziniao-access-policy` | 访问策略管理 |
 | `ziniao-openapi-explorer` | API 路径清单与探索指引 |
 | `ziniao-workflow-batch-account` | 批量账号授权工作流 |
-| `ziniao-workflow-store-patrol` | 店铺巡检工作流 |
 | `ziniao-skill-maker` | 自定义 Skill 创建指引 |
 
 ## 适用环境

@@ -1,7 +1,7 @@
 ---
 name: ziniao-shared
 version: 1.0.0
-description: "紫鸟 CLI 共享基础：应用配置初始化、统一 apiKey 认证、错误处理、输出格式、安全规则。当用户需要第一次配置(`ziniao-cli config init`)、遇到认证/权限问题、或首次使用 ziniao-cli 时触发。"
+description: "紫鸟 CLI 共享基础：应用配置初始化、ZClaw 客户端与 Bridge 就绪、统一 apiKey 认证、错误处理、输出格式和安全规则。当用户需要首次使用 ziniao-cli、配置 API Key、启动紫鸟客户端、登录 ZClaw 或排查认证/Bridge 问题时触发。"
 metadata:
   requires:
     bins: ["ziniao-cli"]
@@ -63,7 +63,7 @@ Agent 应该：
 4. 等待命令完成（审核通过/拒绝/超时）
 5. 如果审核被拒绝，告知用户联系 Boss 审批
 
-所有凭证（apiKey、companyId）存入系统 Keychain，配置文件在 `~/.ziniao-cli/config.json`。
+apiKey 加密后写入本地。沙箱/容器可直接使用，无需系统钥匙串。
 
 ### Boss 与成员账号
 
@@ -74,7 +74,7 @@ Agent 应该：
 | Boss | ✓ 全部可用 | ✓ 全部可用 |
 | 成员 | ✗ 不可用（返回 auth 错误） | ✓ 全部可用 |
 
-成员账号不存储 companyId，所有通过 `api` 命令或服务端快捷命令（account/staff/department/role/device）的请求会被拦截并提示"需要 Boss 权限"。
+服务端 API 权限仅 Boss 账号可申请和调用。成员账号不能开通这些权限点，也不存储 companyId；所有通过 `api` 命令或服务端快捷命令（account/staff/department/role/device）的请求会被拦截并提示"需要 Boss 权限"。
 
 ### 检查配置
 
@@ -83,6 +83,77 @@ ziniao-cli config show   # 查看当前配置（含 profile 名称）
 ziniao-cli config list   # 列出所有 profile
 ziniao-cli doctor         # 全面自检（配置 + apiKey + 网络 + ZClaw Bridge）
 ```
+
+## ZClaw 客户端与 Bridge 就绪
+
+ZClaw 本地浏览器操作依赖紫鸟客户端和本地 Bridge。本次任务首次执行店铺或页面命令前，先运行以下命令检查环境：
+
+### 登录命令硬约束
+
+本节所有“登录”“自动登录”“先登录”都只表示逐字执行 `ziniao-cli zclaw login`。不存在可替代的 `ziniao-cli login`，也不得省略 `zclaw`。在输出或执行登录步骤前先核对完整命令。
+
+```bash
+ziniao-cli doctor
+```
+
+如果 `doctor` 各项明细确认配置、API Key、服务端连通性、Bridge 连通且客户端账号与当前 profile 一致，直接执行原店铺或页面命令；不要只依据最后的汇总文字。一次任务内已经检查通过且认证、profile 和客户端状态未变化时，不要为每个后续命令重复检查。
+
+当 `doctor` 的客户端明细明确显示“紫鸟客户端已启动，但尚未登录”或 `[CLIENT_LOGGED_OUT]`，且 Bridge 已连通、没有 API Key、终端绑定或账号不一致错误时，这已经是确定的未登录状态。未登录恢复命令固定且只能是 `ziniao-cli zclaw login`；`ziniao-cli login` 不是有效命令，不得缩写或替换。必须在任何 `store`、`page` 业务命令之前按以下顺序执行：
+
+```bash
+ziniao-cli zclaw login
+ziniao-cli doctor
+# 仅当 doctor 明细全部通过时，执行一次原业务命令
+```
+
+禁止先调用 `store list`、`store resolve`、`store open` 或 `page` 命令来再次探测登录状态，即使 `doctor` 退出码为 0 或 Bridge 显示正常也不例外。登录失败或复查仍未通过时立即停止并报告实际错误。
+
+仅当 `doctor` 的客户端检查明确显示“紫鸟客户端未启动或本地服务未就绪”时，才可尝试启动客户端。调用前按**当前 Shell**选择一种命令检查 `ziniao` 是否可解析，不得把某一种检测命令用于所有平台，也不得依次执行多种检测命令：
+
+| 当前 Shell | 命令检测 |
+|------------|----------|
+| Windows PowerShell | `Get-Command ziniao -ErrorAction SilentlyContinue` |
+| Windows CMD | `where.exe ziniao` |
+| macOS/Linux Bash、Zsh、sh，或 Windows Git Bash | `command -v ziniao` |
+
+若当前 Shell 找不到 `ziniao`，不得调用或重试 `ziniao start`。macOS 例外：如果 `/Applications/ziniao.app` 存在，可执行一次 `open -a "/Applications/ziniao.app"` 启动桌面客户端，然后重新运行 `ziniao-cli doctor`；不得把 `open` 当作 Bridge 就绪证明。其他平台提示用户手动启动紫鸟客户端，用户完成后重新运行 `ziniao-cli doctor`。只有找到 `ziniao` 命令时，才执行一次：
+
+```bash
+ziniao start
+ziniao-cli doctor
+```
+
+`ziniao start` 只用于启动或唤起单实例紫鸟客户端，不能修复 API Key、终端绑定、账号不一致或登录会话问题。Bridge 可能在客户端启动后才就绪；启动后可短间隔重新运行 `doctor`，总等待时间最多 30 秒。若 `ziniao start` 返回 Windows 错误 1113 或其他启动错误，或命令成功返回但 macOS 上 `doctor` 仍明确显示客户端未启动，可在 `/Applications/ziniao.app` 存在时额外执行一次 `open -a "/Applications/ziniao.app"`，随后重新运行 `doctor`；不得再次重试 `ziniao start`。仍未通过则报告启动错误和 doctor 明细后停止。
+
+如果 ZClaw Bridge 暂时不可连接，不要再次执行 `ziniao start`，也不要执行 `zclaw login`；只短间隔重新运行 `doctor`，总等待时间最多 30 秒，仍未恢复则停止并报告。即使同一次 `doctor` 还显示客户端未登录，也必须先等 Bridge 恢复。Bridge 恢复后的下一步只能是读取最新一次 `doctor` 明细并重新分流：仍未登录才执行 `ziniao-cli zclaw login`，全部通过才执行原业务命令；禁止在复查前预先执行或承诺执行 `store open`。不要把启动或登录当作状态探测。
+
+独立的运行中会话失效分支：如果此前 `doctor` 明细已经通过，但原始 `store`、`page` 或其他 ZClaw 本地命令随后明确返回 `Ziniao user is not logged in`，下一条命令必须逐字为：
+
+```bash
+ziniao-cli zclaw login
+```
+
+这里同样只能使用完整命令 `ziniao-cli zclaw login`，不得写成不存在的 `ziniao-cli login`。登录成功后，使用相同参数只重试刚才失败的原命令一次；不要为了这次恢复额外执行 `doctor`。不得在尚未尝试 `zclaw login` 前要求用户手工登录。
+
+若 `zclaw login` 失败，直接报告其实际错误。API Key 无效或被拒绝、终端未绑定、账号不一致，或 Bridge 不可连接时，必须立即停止，禁止重复登录、重复发送店铺请求，或笼统要求用户“先登录客户端”。只有原始错误不是该精确未登录错误、或登录命令本身无法恢复时，才按对应原因要求用户处理前置条件。
+
+只有 `doctor` 显示配置、API Key、服务端连通性、ZClaw Bridge 和客户端账号一致时，才继续浏览器操作：
+
+- 店铺窗口操作使用 `ziniao-store` Skill。
+- 页面浏览器自动化使用 `ziniao-page` Skill。
+- 查询可用 Bridge 工具使用 `ziniao-cli zclaw tools`；仅在没有快捷命令或用户明确要求调试原始工具时，才使用 `ziniao-cli zclaw invoke <tool>`。
+
+| 现象 | 处理 |
+|------|------|
+| `config init --new` 提示客户端未登录 | 启动并登录紫鸟客户端，再重新执行初始化。 |
+| `doctor` 提示客户端未启动或本地服务未就绪 | 按当前 Shell 使用 PowerShell `Get-Command`、CMD `where.exe` 或 POSIX/Git Bash `command -v` 检测；找到命令才执行一次 `ziniao start`。若 macOS 上 `ziniao start` 失败或执行后仍未启动，且存在 `/Applications/ziniao.app`，可再执行一次 `open -a "/Applications/ziniao.app"`，随后重新运行 `doctor`；若 macOS 找不到命令但应用存在，也直接使用一次 `open`；其他情况提示用户手动启动。 |
+| `doctor` 明确显示客户端已启动但未登录，且 Bridge 已连通 | 直接执行一次 `ziniao-cli zclaw login`，不得先发店铺或页面命令探测；登录后重新运行 `doctor`，明细全部通过后才执行原业务命令。 |
+| `127.0.0.1:9481` 暂不可连接（无论客户端是否同时显示未登录） | 不启动、不登录；短间隔重新运行 `doctor`，最多等待 30 秒。Bridge 恢复后再按最新客户端明细分流。 |
+| `ziniao start` 返回 Windows 错误 1113 或其他启动错误 | 不重试启动；立即重新运行一次 `doctor`，明细通过则继续，否则同时报告启动错误和 doctor 明细后停止。 |
+| `zclaw login` 提示无法连接 ZClaw Bridge | 不把登录当作启动探测；回到 `doctor` 判断 9481 不可连接的具体原因。 |
+| API Key 无效或未配置 | 使用正确的 Key 重新执行 `ziniao-cli config init`，或重新运行 `ziniao-cli config init --new`。 |
+| 初始化后 ZClaw 仍提示 API Key 认证失败 | 前往 https://open.ziniao.com 的用户应用「终端管理」，绑定当前终端识别码（在紫鸟浏览器设置中查看），然后重新执行 `ziniao-cli zclaw login` 和 `ziniao-cli doctor`。 |
+| `doctor` 提示客户端登录用户与当前 profile 不一致 | 明确说明当前 profile 与客户端登录账号及其不一致，询问用户是否切换到当前 profile 对应账号并继续原请求；不要只要求用户手工切换。用户确认后按既有登录流程继续。 |
 
 ### 多账号切换
 
@@ -128,7 +199,7 @@ ziniao-cli 使用**统一 apiKey**（Bearer Token），一个 Key 同时用于�
 
 ### ISV 应用权限点
 
-调用服务端 API 前，需在紫鸟开放平台为应用开通对应的权限点。以下是各模块所需的权限点：
+调用服务端 API 前，需在紫鸟开放平台为应用开通对应的权限点。这些权限仅 Boss 账号可申请和调用。以下是各模块所需的权限点：
 
 | 模块 | 权限点 | 覆盖接口 |
 |------|--------|---------|
@@ -218,6 +289,22 @@ AI Agent 调用时按优先级选择：
 2. **通用 api 命令** -- `api <path>` 兜底（任意接口都能调，需要手写 JSON body）
 3. **zclaw invoke** -- `zclaw invoke <tool>` 兜底（任意 ZClaw 工具都能调）
 
+### ZClaw 快捷命令硬约束
+
+若某个 ZClaw 工具已有对应快捷命令，**必须只调用快捷命令**，禁止再调用
+`ziniao-cli zclaw invoke <tool>`。两者最终都会请求同一个 Bridge 工具；重复调用会重复执行操作。
+
+`zclaw invoke` 仅用于没有快捷命令的 Bridge 工具，或用户明确要求按原始工具名和 JSON 参数调试。
+
+例如 `visit_page` 已由 `page visit` 封装，必须使用 `ziniao-cli page visit ...`。
+
+### 店铺环境结果硬约束
+
+当用户要求店铺浏览器、店铺代理或该店铺登录态下的结果时，结果只能来自该店铺环境。
+店铺页面操作失败后，禁止改用公开网页、搜索引擎、其他店铺、服务端 API 或供应来源来“替代”结果；除非用户明确将任务范围改为公开信息检索。
+
+发生 `ERR_SOCKS_CONNECTION_FAILED` 时，保持当前店铺打开，等待 5 秒后以相同参数重试；最多 3 次总尝试。仍失败时，报告该店铺环境暂时无法访问及已尝试次数，并停止该店铺任务；不得声称已取得店铺环境结果。
+
 ## 输出格式
 
 所有命令支持 `--format json|table|csv` 和 `--jq` 过滤：
@@ -248,7 +335,7 @@ ziniao-cli department list --format csv
 | `gateway` | 网关层错误 (code != "0") | 报告错误，检查网络/apiKey |
 | `business` | 业务层错误 (ret != 0) | 报告错误信息，根据 msg 判断原因 |
 | `validation` | 参数校验失败 | 检查命令参数是否正确 |
-| `network` | 网络不通/Bridge 未启动 | ZClaw 相关：提示启动紫鸟浏览器；API 相关：检查网络 |
+| `network` | 网络不通/Bridge 未启动 | ZClaw 相关：回到 `doctor` 明细路由，只有客户端未启动时才进入启动流程；API 相关：检查网络 |
 
 ## 更新检查
 
@@ -299,7 +386,10 @@ MSYS_NO_PATHCONV=1 ziniao-cli api /superbrowser/rest/v1/erp/store/create \
 
 ## 安全规则
 
-- **禁止输出完整 apiKey** 到终端明文
+- **API Key 是静态敏感凭证**：不得请求用户在聊天中发送完整 Key，也不得在回复、终端输出或错误信息中展示完整 Key
+- **禁止把完整 API Key 写入命令行参数、Shell 历史、脚本、截图、录屏、聊天消息、日志或 Git**
+- 人工交互环境使用 `ziniao-cli config init` 输入 Key；输入期间避免屏幕共享、录屏和终端日志采集
+- CI/CD 使用 `ziniao-cli config init --api-key-stdin`，由 Secret Manager 或受保护的标准输入提供 Key；不得把 Key 直接写在流水线命令中
 - **写入/删除操作前必须确认用户意图**
 - `high-risk-write` 操作（department delete、staff remove）会要求交互式确认，可用 `--yes` 跳过
 - 建议先用 `--dry-run` 预览危险请求

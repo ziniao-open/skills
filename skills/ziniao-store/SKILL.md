@@ -1,53 +1,47 @@
 ---
 name: ziniao-store
-version: 1.0.0
-description: "紫鸟店铺管理（ZClaw 本地浏览器 Bridge）：列出、打开、关闭紫鸟浏览器中的店铺。当用户需要查看店铺列表、打开/关闭店铺浏览器窗口时使用。"
+description: "Use when a request concerns the local 紫鸟/ZClaw browser, a store name or ID, listing/resolving/opening/reusing/closing a store browser, or a store-scoped task that starts from a store. Do not use for server-side account CRUD or for a webpage task on an already-open store."
 metadata:
   requires:
     bins: ["ziniao-cli"]
 ---
 
-# 店铺管理（ZClaw）
+# 紫鸟店铺入口
 
-**CRITICAL — 开始前 MUST 先用 Read 工具读取 [`../ziniao-shared/SKILL.md`](../ziniao-shared/SKILL.md)**
-**CRITICAL — Shortcuts 执行前，务必先读取对应的 references/ 说明文档。**
-**CRITICAL — 调用 ZClaw 本地接口时，必须使用本技能中的 ziniao-cli 命令，不要使用 ziniao-assistant 技能自行调用。**
+本技能负责“店铺”这一资源及其本地浏览器生命周期，不负责定义用户的业务目标，也不复制 CLI 帮助文档。
 
-**前提条件：紫鸟浏览器客户端必须已启动。** 可用 `ziniao-cli doctor` 检测。
+## 负责范围
 
-> **获取店铺列表时优先使用 `store list`**（本地 ZClaw Bridge），因为普通成员没有服务端 `account list` 权限。成员类型可通过 `ziniao-cli config show` 结果中的 `isBoss` 字段判断。
+- 列出、解析、打开、复用、关闭本地紫鸟店铺浏览器。
+- 保存本次任务确认过的 `store-id`，供后续步骤复用。
+- 用户从某个店铺开始并继续操作网页时，按需使用 `ziniao-page`。
+- 任务涉及配置、认证、Bridge、客户端或网络异常时，按需读取 `ziniao-shared` 的诊断规则。
 
-> **ZClaw 认证失败排查**：初始化应用后仍返回 API Key 认证失败时，提醒用户前往 https://open.ziniao.com 查看用户应用「终端管理」是否已绑定当前终端识别码（识别码在紫鸟浏览器设置中查看）。
+## 路由边界
 
-店铺命令通过本地 ZClaw Bridge（`127.0.0.1:9481`）控制紫鸟浏览器，使用与服务端 API 相同的统一 apiKey。
+- 请求以店铺名称/ID或“本地紫鸟店铺”为起点：先处理店铺，再判断是否需要页面能力。
+- 已有明确且正在运行的店铺，只需网页操作：使用 `ziniao-page`，不要重复打开店铺。
+- 店铺后台账号的创建、删除、授权、标签等服务端管理：使用 `ziniao-account`，不是本技能。
+- 不要把用户的业务目标或任务参数写入本技能；这些属于任务内容，不是店铺能力。
 
-> **注意区分：** `store` 命令控制**本地浏览器窗口**（打开/关闭/列出已连接的店铺）。如需对店铺做后台管理操作（创建、删除、授权、标签），请使用 `account` 命令（走服务端 API）。
+## 最小执行规则
 
-## Shortcuts
+1. 需要店铺对象时，使用 CLI 的 `store list` 或 `store resolve` 获取并确认目标。
+2. 需要浏览器窗口时，使用 `store open`；已有有效 `store-id` 且店铺仍运行时直接复用。
+3. 需要网页资源操作时，继续使用 `ziniao-page`；不要在本技能中重述页面命令。
+4. 店铺命令失败时，根据错误按需运行 `ziniao-cli doctor`；不要无条件登录、启动或重复重试。
+5. 具体参数不确定时，使用 `ziniao-cli store <command> --help`，复杂命令再读取对应 reference。
 
-| 命令 | 说明 | 详细文档 |
-|------|------|---------|
-| `store list` | 列出所有店铺 | [`references/ziniao-store-list.md`](references/ziniao-store-list.md) |
-| `store open` | 打开店铺浏览器 | [`references/ziniao-store-open.md`](references/ziniao-store-open.md) |
-| `store resolve` | 按名称/ID 解析店铺 | `--name "xxx"` 或 `--id xxx` `--expected-name "yyy"` |
-| `store close` | 关闭店铺 | `--id xxx` |
-| `store prepare-agent` | 准备 Agent 资源 | 无参数 |
+## 打开后的验证边界
 
-## 通用 zclaw 覆盖
+- 用户只要求打开店铺时，精确解析店铺并成功执行带 `--expected-name` 的 `store open` 即可结束；不得为了证明窗口存在而追加 `page snapshot`。
+- 用户同时给出目标 URL 时，首次打开优先使用同一次 `store open --url`，不要再对同一 URL 重复执行 `page visit`。
+- 用户要求确认最终页面或业务状态时，转到 `ziniao-page`，使用导航返回值、`page content` 或 `page exec` 验证 URL/title/正文；不得用 snapshot 代替普通页面验证。
+- 只有后续页面任务本身满足上传、自定义控件或复杂歧义定位条件时，才由 `ziniao-page` 决定使用 snapshot。
 
-所有店铺操作也可通过通用 zclaw invoke 命令调用：
+## 按需参考
 
-```bash
-ziniao-cli zclaw invoke list_stores
-ziniao-cli zclaw invoke open_store --args '{"storeName":"Rosehut"}'
-ziniao-cli zclaw invoke close_store --args '{"storeId":"abc123"}'
-ziniao-cli zclaw invoke prepare_agent
-```
-
-## 错误处理
-
-| 错误 | 解决 |
-|------|------|
-| 无法连接 Bridge | 启动紫鸟浏览器客户端 |
-| API Key 认证失败（初始化后仍报错） | 前往 https://open.ziniao.com 用户应用「终端管理」绑定当前终端识别码 |
-| 店铺不存在 | `ziniao-cli store list` 查看可用店铺 |
+- [store list](references/ziniao-store-list.md)：需要列出店铺时读取。
+- [store open](references/ziniao-store-open.md)：需要打开或复用店铺时读取。
+- `ziniao-shared`：仅在配置、认证、Bridge 或诊断问题出现时读取。
+- `ziniao-page`：仅在任务继续操作已打开店铺内网页时读取。
